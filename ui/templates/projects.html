@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.js"></script>
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"
+    </head>
+    <body>
+        <div id="error-dialog" title="Error"></div>
+
+
+        <div id="root">
+            <!-- This div's content will be managed by React. -->
+        </div>
+        <!--
+        For ease of use, we are including the React, ReactDOM and Babel CDN
+        builds to make getting started as fast as possible.
+
+        In production, you'll want to instead look at using something
+        like Gulp, Grunt or WebPack (my personal recommendation)
+        to compile JSX into JavaScript. Also, check out:
+        http://facebook.github.io/react/docs/tooling-integration.html
+        -->
+        <script src="https://fb.me/react-15.0.1.js"></script>
+        <script src="https://fb.me/react-dom-15.0.1.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+        <script type="text/babel">
+            //import $ from 'jquery';
+            /*
+            var html = '<ul>';
+            for(var i = 0; i < data.projects.length; i++) {
+                html += '<li><a href="project.html?project=' + encodeURIComponent(data.projects[i]) + '">' + data.projects[i] + '</a></li>';
+            }
+            html += '</ul>';
+            */
+            var ProjectList = React.createClass({
+                componentDidMount: function() {
+                    var component = this;
+                    fetch("http://localhost:6800/listprojects.json")
+                    .then(function(response) {
+                        console.log('status:' + response.status);
+                        response.json().then(function(obj) {
+                            component.setState({projects: obj['projects']});
+                        });
+                    })
+                    .catch(function(err) {
+                        console.log("?? fetch err: " + err);
+                    });
+                },
+                render: function() {
+                    if(this.state) {
+                        console.log("Rendering state:" + JSON.stringify(this.state['projects']));
+                        var listItems = [];
+                        for (var i = 0; i < this.state['projects'].length; i++) {
+                            // <a href="project.html?project=' + encodeURIComponent(data.projects[i]) + '">
+                            var project = this.state['projects'][i];
+                            var url = "project.html?project=" + encodeURIComponent(project);
+                            listItems.push(<li><a href={url}>{project}</a></li>);
+                        }
+                        return (
+                            <ul>{listItems}</ul>
+                        );
+                    } else {
+                        return (
+                            <p>Loading...</p>
+                        );
+                    }
+                }
+            });
+
+            ReactDOM.render(
+                <ProjectList />,
+                document.getElementById('root')
+            );
+        </script>
+
+        <h1>Projects</h1>
+        <div id="project-list"></div>
+
+        <form id="addversion">
+            <label>Project name: <input id="addversion_project" name="project" type="text" value="myproject"></label>
+            <label>Version: <input id="addversion_version" name="version" type="text" value="r23"></label>
+            <label>Egg file: <input id="addversion_egg" name="egg" type="file"></label>
+            <input type="submit" />
+        </form>
+        <script type="text/javascript">
+            function refreshProjects() {
+                /*
+                $.get("http://localhost:6800/listprojects.json", function(data) {
+                    var html = '<ul>';
+                    for(var i = 0; i < data.projects.length; i++) {
+                        html += '<li><a href="project.html?project=' + encodeURIComponent(data.projects[i]) + '">' + data.projects[i] + '</a></li>';
+                    }
+                    html += '</ul>';
+                    $("#project-list").html(html);
+                });
+                */
+                fetch("http://localhost:6800/listprojects.json")
+                .then(function(response) {
+                    response.json().then(function(obj) {
+                        console.log('blah:' + JSON.stringify(obj));
+                    });
+                })
+            }
+            $(document).ready(function() {
+                $("#addversion").on("submit", function() {
+                    console.log("submit clicked");
+                    var formData = new FormData($("#addversion")[0]);
+                    console.log("formData: " + formData);
+                    $.ajax({
+                        url: "http://localhost:6800/addversion.json",
+                        data: formData,
+                        processData: false,  // required for file upload
+                        contentType: false,  // required for file upload
+                        type: 'POST',
+                        success: function(data) {
+                            console.log("callback:" + data);
+                            if(data.status == 'ok') {
+                                refreshProjects();
+                            } else {
+                                $("#error-dialog").html("<p>" + data.message + "</p>");
+                                $("#error-dialog").dialog("open");
+                            }
+                            return false;
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            $("#error-dialog").html("<p>Error communicating with Scrapyd daemon.</p>");
+                            $("#error-dialog").dialog("open");
+                        }
+                    });
+                    return false;
+                });
+                $("#error-dialog").dialog({
+                    autoOpen: false,
+                    modal: true,
+                    buttons: {
+                        Ok: function() {
+                            $( this ).dialog( "close" );
+                        }
+                    }
+                });
+                refreshProjects();
+            });
+        </script>
+    </body>
+</html>

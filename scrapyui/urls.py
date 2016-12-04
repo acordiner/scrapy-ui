@@ -15,7 +15,13 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.contrib import admin
+from django.views.generic import TemplateView
+
+from ui.views import schedule
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    url(r'^schedule', schedule),
+    url(r'^project\.html$', TemplateView.as_view(template_name='project.html')),
+    url(r'^projects\.html$', TemplateView.as_view(template_name='projects.html')),
 ]
