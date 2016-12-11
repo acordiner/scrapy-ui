@@ -120,5 +120,9 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 INSTALLED_APPS += (
+    'django_celery_results',
+    'django_celery_beat',
     'ui',
 )
+
+CELERY_RESULT_BACKEND = 'django-db'
